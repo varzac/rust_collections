@@ -1,0 +1,9 @@
+[package]
+
+name = "linked_list"
+version = "0.0.1"
+authors = ["Zach Varberg <Zachary.Varberg@Digi.com>"]
+
+[[bin]]
+
+name = "linked_list"
