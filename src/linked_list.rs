@@ -4,6 +4,7 @@ use std::clone::Clone;
 use std::cmp::PartialEq;
 use std::fmt::Display;
 
+
 struct Node<T:PartialEq+Clone+Display> {
     data: T,
     next: Option<Rc<Node<T>>>,
@@ -54,13 +55,15 @@ impl<T> Node<T>
         }
     }
 
-    fn get(&self, idx: i32) -> Node<T> {
+    fn get(&self, idx: i32) -> Option<Node<T>> {
+        // Return the node at position idx 
+        // Option::None if the index is out of bounds
         if idx == 0 {
-            self.clone()
+            Option::Some((self.clone()))
         } else {
             match self.next {
                 Option::Some(ref n) => n.get(idx-1),
-                Option::None => panic!("Index out of bounds.")
+                Option::None => Option::None
             }
         }
     }
@@ -141,6 +144,122 @@ fn create_test_list(len: i32) -> Rc<Node<i32>> {
     Rc::new (Node { data: 0, next: Option::Some(last.clone()) } )
 }
 
+#[test]
+fn test_length() {
+    let list = create_test_list(10);
+    assert!(list.length() == 10);
+    let list2 = create_test_list(15);
+    assert!(list2.length() == 15);
+}
+
+#[test]
+fn test_get() {
+    let list = create_test_list(10);
+    for x in 0..list.length() {
+        let get_val = list.get(x);
+        match get_val {
+            Option::Some(ref n) => assert!(n.data == x),
+            Option::None => panic!("Index {} should not be out of bounds", x)
+        }
+    }
+}
+
+#[test]
+fn test_get_oob() {
+    let list = create_test_list(10);
+    let get_val = list.get(15);
+    match get_val {
+        Option::Some(_) => panic!("Index {} should be out of bounds!", 15),
+        Option::None => ()
+    }
+}
+
+#[test]
+fn test_find_exists() {
+    let list = create_test_list(10);
+    for x in 0..list.length() {
+        assert!(list.find(x) == x);
+    }
+}
+
+#[test]
+fn test_find_not_exists() {
+    let list = create_test_list(10);
+    assert!(list.find(15) == -1);
+}
+
+#[test]
+fn test_eq() {
+    let list = create_test_list(10);
+    let list2 = create_test_list(10);
+    assert!(list == list2);
+    let list3 = Rc::new ( Node { data: 15, next: Option::Some(list2) } );
+    assert!(list != list3);
+}
+
+#[test]
+fn test_clone() {
+    let list = create_test_list(10);
+    let list2 = list.clone();
+    assert!(list2.length() == list.length());
+    assert!(list == list2);
+}
+
+#[test]
+fn test_insert_val() {
+    let insert_val = 15;
+    let list = create_test_list(10);
+    let list2 = list.insert_val(insert_val);
+    assert!(list.length() + 1 == list2.length());
+    let find_idx = list2.find(insert_val);
+    assert!(find_idx != -1);
+    let get_val = list2.get(find_idx);
+    match get_val {
+        Option::Some(ref n) => assert!(n.data == insert_val),
+        Option::None => panic!("Index should not be out of bounds")
+    }
+
+}
+
+#[test]
+fn test_delete_found() {
+    let del_value = 5;
+    let list = create_test_list(10);
+    let del_list = list.delete_val(del_value);
+    match del_list {
+        Option::Some(ref n) => {
+            assert!(n.find(del_value) == -1);
+            assert!(n.length() == list.length() - 1)
+        },
+        Option::None => panic!("Should successfully return a value!")
+    }
+}
+
+#[test]
+fn test_delete_not_found() {
+    let del_value = 15;
+    let list = create_test_list(10);
+    let del_list = list.delete_val(del_value);
+    match del_list {
+        Option::Some(ref n) => {
+            assert!(n.find(del_value) == -1);
+            assert!(n.length() == list.length())
+        },
+        Option::None => panic!("Should successfully return a value!")
+    }
+}
+
+#[test]
+fn test_delete_only_element() {
+    let list = Rc::new ( Node { data: 0, next: Option::None});
+    let del_list = list.delete_val(0);
+    match del_list {
+        Option::Some(_) => {
+            panic!("The only element should have been deleted!")
+        },
+        Option::None => ()
+    }
+}
 
 
 fn main() {
