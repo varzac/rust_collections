@@ -1,13 +1,16 @@
 use std::rc::Rc;
 use std::option::Option;
 use std::clone::Clone;
+use std::cmp::PartialEq;
+use std::fmt::Display;
 
-struct Node {
-    data: i32,
-    next: Option<Rc<Node>>,
+struct Node<T:PartialEq+Clone+Display> {
+    data: T,
+    next: Option<Rc<Node<T>>>,
 }
 
-impl Node {
+impl<T> Node<T> 
+        where T: PartialEq + Clone + Display{
     fn print(&self) {
         print!("{{ {} }} -> ", self.data);
         match self.next {
@@ -16,7 +19,7 @@ impl Node {
         };
     }
 
-    fn delete_val(&self, val: i32) -> Option<Rc<Node>> {
+    fn delete_val(&self, val: T) -> Option<Rc<Node<T>>> {
         if val == self.data {
             match self.next {
                 Option::Some(ref n) => {
@@ -28,26 +31,27 @@ impl Node {
             match self.next {
                 Option::Some(ref n) => {
                    Option::Some(Rc::new (
-                        Node {data: self.data, next: n.delete_val(val)}
+                        Node {data: self.data.clone(), next: n.delete_val(val)}
                         ))
                 }
                 Option::None => {
                    Option::Some(Rc::new (
-                        Node { data: self.data, next: Option::None }
+                        Node { data: self.data.clone(), next: Option::None }
                         ))
                 }
             }
         }
     }
 
-    fn insert_val(&self, val: i32) -> Node {
+    fn insert_val(&self, val: T) -> Node<T> {
         Node { data: val, next: Option::Some(Rc::new(self.clone())) }
     }
 }
 
-impl Clone for Node {
-    fn clone(&self) -> Node{
-        let copy_val = self.data;
+impl<T> Clone for Node<T> 
+           where T: Clone + PartialEq + Display{
+    fn clone(&self) -> Node<T> {
+        let copy_val = self.data.clone();
         match self.next {
             Option::Some(ref n) => {
                 Node { data: copy_val, next:  Option::Some(n.clone())}
@@ -81,5 +85,4 @@ fn main() {
     }
     let start = start.insert_val(12);
     start.print();
-
 }
