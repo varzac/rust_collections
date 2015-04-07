@@ -1,24 +1,17 @@
 use std::rc::Rc;
 use std::cmp::PartialEq;
-use std::fmt::Display;
+use std::fmt::{self, Display};
 
 
-struct Node<T:PartialEq+Clone+Display> {
+struct LinkedList<T:PartialEq+Clone+Display> {
     data: T,
-    next: Option<Rc<Node<T>>>,
+    next: Option<Rc<LinkedList<T>>>,
 }
 
-impl<T> Node<T> 
+impl<T> LinkedList<T> 
         where T: PartialEq + Clone + Display{
-    fn print(&self) {
-        print!("{{ {} }} -> ", self.data);
-        match self.next {
-            Some(ref n) => n.print(),
-            None => println!("{{}}")
-        };
-    }
 
-    fn delete_val(&self, val: &T) -> Option<Rc<Node<T>>> {
+    fn delete_val(&self, val: &T) -> Option<Rc<LinkedList<T>>> {
         if val == &self.data {
             match self.next {
                 Some(ref n) => {
@@ -30,20 +23,20 @@ impl<T> Node<T>
             match self.next {
                 Some(ref n) => {
                    Some(Rc::new (
-                        Node {data: self.data.clone(), next: n.delete_val(val)}
+                        LinkedList {data: self.data.clone(), next: n.delete_val(val)}
                         ))
                 }
                 None => {
                    Some(Rc::new (
-                        Node { data: self.data.clone(), next: None }
+                        LinkedList { data: self.data.clone(), next: None }
                         ))
                 }
             }
         }
     }
 
-    fn insert_val(&self, val: T) -> Node<T> {
-        Node { data: val, next: Some(Rc::new(self.clone())) }
+    fn insert_val(&self, val: T) -> LinkedList<T> {
+        LinkedList { data: val, next: Some(Rc::new(self.clone())) }
     }
 
     fn length(&self) -> i32 {
@@ -56,7 +49,7 @@ impl<T> Node<T>
     /// Get a node from the list
     /// Return the node at position idx 
     /// Returns Option::None if the index is out of bounds
-    fn get(&self, idx: i32) -> Option<Node<T>> {
+    fn get(&self, idx: i32) -> Option<LinkedList<T>> {
         if idx == 0 {
             Some(self.clone())
         } else {
@@ -88,7 +81,21 @@ impl<T> Node<T>
     }
 }
 
-impl<T> PartialEq for Node<T>
+impl<T> Display for LinkedList<T>
+    where T: Clone + PartialEq + Display {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            // Ignore the result as we return it later
+            // The assignment avoids the must use compiler warning
+            let _ = write!(f, "{{ {} }} -> ", self.data);
+            match self.next {
+                Some(ref n) => n.fmt(f),
+                None => write!(f, "{{}}")
+            }
+        }
+}
+
+
+impl<T> PartialEq for LinkedList<T>
     where T: Clone + PartialEq + Display {
         fn eq(&self, other: &Self) -> bool {
             match self.next {
@@ -114,33 +121,33 @@ impl<T> PartialEq for Node<T>
         }
 }
 
-impl<T> Clone for Node<T> 
+impl<T> Clone for LinkedList<T> 
     where T: Clone + PartialEq + Display{
-        fn clone(&self) -> Node<T> {
+        fn clone(&self) -> LinkedList<T> {
             let copy_val = self.data.clone();
             match self.next {
                 Some(ref n) => {
-                    Node { data: copy_val, next:  Some(n.clone())}
+                    LinkedList { data: copy_val, next:  Some(n.clone())}
 
                 },
                 None => {
-                    Node { data: copy_val, next: None}
+                    LinkedList { data: copy_val, next: None}
                 }
             }
         }
 }
 
-fn create_test_list(len: i32) -> Rc<Node<i32>> {
+fn create_test_list(len: i32) -> Rc<LinkedList<i32>> {
     let mut last = Rc::new (
-        Node { data: len - 1, next: None }
+        LinkedList { data: len - 1, next: None }
     );
     for x in 0..(len - 2) {
         let next_node = Rc::new (
-            Node { data: len - 2 - x, next: Some(last.clone()) }
+            LinkedList { data: len - 2 - x, next: Some(last.clone()) }
         );
         last = next_node;
     }
-    Rc::new (Node { data: 0, next: Some(last.clone()) } )
+    Rc::new (LinkedList { data: 0, next: Some(last.clone()) } )
 }
 
 #[test]
@@ -193,7 +200,7 @@ fn test_eq() {
     let list = create_test_list(10);
     let list2 = create_test_list(10);
     assert!(list == list2);
-    let list3 = Rc::new ( Node { data: 15, next: Some(list2) } );
+    let list3 = Rc::new ( LinkedList { data: 15, next: Some(list2) } );
     assert!(list != list3);
 }
 
@@ -262,7 +269,7 @@ fn test_delete_not_found() {
 
 #[test]
 fn test_delete_only_element() {
-    let list = Rc::new ( Node { data: 0, next: None});
+    let list = Rc::new ( LinkedList { data: 0, next: None});
     let del_list = list.delete_val(&0);
     match del_list {
         Some(_) => {
@@ -276,16 +283,14 @@ fn test_delete_only_element() {
 fn main() {
     let start = create_test_list(10);
     let copy = start.clone();
-    start.print();
-    println!("Copy length: {}", copy.length());
+    println!("{}", start);
     let copy = copy.delete_val(&5);
     match copy {
         Some(ref n) => {
-            println!("Copy length: {}", n.length());
-            n.print();
+            println!("{}", n)
         },
         None => println!("Empty List")
     }
     let start = start.insert_val(12);
-    start.print();
+    println!("{}", start)
 }
