@@ -115,10 +115,6 @@ impl<T> PartialEq for LinkedList<T>
                 }
             }
         }
-
-        fn ne(&self, other: &Self) -> bool {
-            !self.eq(other)
-        }
 }
 
 impl<T> Clone for LinkedList<T> 
