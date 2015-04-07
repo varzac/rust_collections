@@ -137,30 +137,30 @@ impl<T> Clone for LinkedList<T>
         }
 }
 
-fn create_test_list(len: i32) -> Rc<LinkedList<i32>> {
+fn create_i32_list(start: i32, len: i32) -> Rc<LinkedList<i32>> {
     let mut last = Rc::new (
-        LinkedList { data: len - 1, next: None }
+        LinkedList { data: start + len - 1, next: None }
     );
     for x in 0..(len - 2) {
         let next_node = Rc::new (
-            LinkedList { data: len - 2 - x, next: Some(last.clone()) }
+            LinkedList { data: start + len - 2 - x, next: Some(last.clone()) }
         );
         last = next_node;
     }
-    Rc::new (LinkedList { data: 0, next: Some(last.clone()) } )
+    Rc::new (LinkedList { data: start, next: Some(last.clone()) } )
 }
 
 #[test]
 fn test_length() {
-    let list = create_test_list(10);
+    let list = create_i32_list(0, 10);
     assert!(list.length() == 10);
-    let list2 = create_test_list(15);
+    let list2 = create_i32_list(0, 15);
     assert!(list2.length() == 15);
 }
 
 #[test]
 fn test_get() {
-    let list = create_test_list(10);
+    let list = create_i32_list(0, 10);
     for x in 0..list.length() {
         // unwrap will panic if the node isn't retrieved properly
         assert!(list.get(x).unwrap().data == x);
@@ -169,7 +169,7 @@ fn test_get() {
 
 #[test]
 fn test_get_oob() {
-    let list = create_test_list(10);
+    let list = create_i32_list(0, 10);
     let get_val = list.get(15);
     match get_val {
         Some(_) => panic!("Index {} should be out of bounds!", 15),
@@ -179,7 +179,7 @@ fn test_get_oob() {
 
 #[test]
 fn test_find_exists() {
-    let list = create_test_list(10);
+    let list = create_i32_list(0, 10);
     for x in 0..list.length() {
         assert!(list.find(x).unwrap() == x);
     }
@@ -187,7 +187,7 @@ fn test_find_exists() {
 
 #[test]
 fn test_find_not_exists() {
-    let list = create_test_list(10);
+    let list = create_i32_list(0, 10);
     let idx = list.find(15);
     match idx {
         Some(_) => panic!("Should not find 15"),
@@ -197,8 +197,8 @@ fn test_find_not_exists() {
 
 #[test]
 fn test_eq() {
-    let list = create_test_list(10);
-    let list2 = create_test_list(10);
+    let list = create_i32_list(0, 10);
+    let list2 = create_i32_list(0, 10);
     assert!(list == list2);
     let list3 = Rc::new ( LinkedList { data: 15, next: Some(list2) } );
     assert!(list != list3);
@@ -206,7 +206,7 @@ fn test_eq() {
 
 #[test]
 fn test_clone() {
-    let list = create_test_list(10);
+    let list = create_i32_list(0, 10);
     let list2 = list.clone();
     assert!(list2.length() == list.length());
     assert!(list == list2);
@@ -215,7 +215,7 @@ fn test_clone() {
 #[test]
 fn test_insert_val() {
     let insert_val = 15;
-    let list = create_test_list(10);
+    let list = create_i32_list(0, 10);
     let list2 = list.insert_val(insert_val);
     assert!(list.length() + 1 == list2.length());
     let find_idx = list2.find(insert_val);
@@ -234,7 +234,7 @@ fn test_insert_val() {
 #[test]
 fn test_delete_found() {
     let del_value = 5;
-    let list = create_test_list(10);
+    let list = create_i32_list(0, 10);
     let del_list = list.delete_val(&del_value);
     match del_list {
         Some(ref n) => {
@@ -252,7 +252,7 @@ fn test_delete_found() {
 #[test]
 fn test_delete_not_found() {
     let del_value = 15;
-    let list = create_test_list(10);
+    let list = create_i32_list(0, 10);
     let del_list = list.delete_val(&del_value);
     match del_list {
         Some(ref n) => {
@@ -281,16 +281,28 @@ fn test_delete_only_element() {
 
 
 fn main() {
-    let start = create_test_list(10);
-    let copy = start.clone();
-    println!("{}", start);
-    let copy = copy.delete_val(&5);
-    match copy {
-        Some(ref n) => {
-            println!("{}", n)
-        },
-        None => println!("Empty List")
+    // An example creating a multi-dimensional structure
+    let len = 10;
+    let mut last = Rc::new (
+        LinkedList { data: create_i32_list((len - 1) * 10, 10), next: None }
+    );
+    for x in 0..(len - 2) {
+        let next_node = Rc::new (
+            LinkedList { data: create_i32_list((len - x - 2) * 10, 10), next: Some(last.clone()) }
+        );
+        last = next_node;
     }
-    let start = start.insert_val(12);
-    println!("{}", start)
+    let start = Rc::new (LinkedList { data: create_i32_list(0, 10), next: Some(last.clone()) } );
+
+    for i in 0..10 {
+        let row = start.get(i).unwrap().data;
+        println!("{:-<60}", " ");
+        for j in 0..10 {
+            print!("| {: <3} ", row.get(j).unwrap().data);
+        }
+        println!("|");
+    }
+    println!("{:-<60}", " ");
+
+    println!("Position [3,7]: {}", start.get(3).unwrap().data.get(7).unwrap().data);
 }
